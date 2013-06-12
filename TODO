@@ -1,0 +1,10 @@
+Poner linia del tiempo debajo
+Q̶u̶e̶ ̶l̶a̶ ̶l̶i̶n̶e̶a̶ ̶d̶e̶ ̶'̶m̶u̶e̶r̶t̶o̶s̶'̶ ̶s̶e̶ ̶d̶e̶s̶t̶a̶q̶u̶e̶ ̶t̶a̶m̶b̶i̶e̶n̶ ̶a̶l̶ ̶h̶a̶c̶e̶r̶ ̶h̶o̶v̶e̶r̶
+Poner un diseño bonito
+Q̶u̶e̶ ̶a̶l̶ ̶h̶a̶c̶e̶r̶ ̶h̶o̶v̶e̶r̶ ̶l̶a̶ ̶l̶i̶n̶e̶a̶ ̶p̶a̶s̶s̶e̶ ̶a̶ ̶p̶r̶i̶m̶e̶r̶ ̶p̶l̶a̶n̶o̶ ̶s̶i̶e̶m̶p̶r̶e̶.̶
+Mostrar más informaicón del fusilado (dia de nacimento, dia de muerte)
+L̶i̶m̶i̶a̶r̶ ̶e̶l̶ ̶c̶o̶d̶i̶g̶o̶ ̶p̶a̶r̶a̶ ̶q̶u̶e̶ ̶s̶o̶l̶o̶ ̶f̶u̶n̶c̶i̶n̶e̶ ̶e̶n̶ ̶c̶l̶a̶s̶s̶e̶s̶ ̶y̶ ̶l̶o̶ ̶d̶e̶m̶a̶s̶ ̶s̶e̶ ̶t̶r̶a̶b̶a̶j̶e̶ ̶e̶n̶ ̶c̶s̶s̶
+Limipiar el codigo para no llamar dos veces a pintar linea, 
+Anonimizar el código
+Limipiar la base de datos para pintar mas lineas ahora mismo sólo unas 1700 de las 3000 tienen valores buenos.
+Añadir un botón que reordene las lineas usando la edad en vez de el año de naciemtno (osea todos empeizan por zero)
