@@ -1,71 +1,304 @@
-<!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Arcosviz by arnauuc</title>
+<head>
+	<title>Vidas Cortadas</title>
+	<script src="lib/d3.v3.js" charset="utf-8"></script>
+<style>
+path.vivos{
+stroke:#FF0000;
+stroke-opacity:0.2;
+stroke-width:1.2;
+fill:none;
+}
+path.robados{
+stroke:#888;
+stroke-opacity:0.2;
+stroke-width:1.2;
+fill:none;
+}
+path.active.vivos{
+stroke-opacity:1;
+stroke:#CC0000;
+stroke-width:2;
+fill:none;
+}
+path.active.robados{
+stroke-opacity:1;
+stroke:#5F5F5F;
+stroke-width:2;
+fill:none;
+}
+</style>
+</head>
+<body>
+	<svg></svg>
+	<script>
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <div class="wrapper">
-      <header>
-        <h1>Arcosviz</h1>
-        <p>Visualizacion de vidas cortadas </p>
-
-        <p class="view"><a href="https://github.com/arnauuc/arcosViz">View the Project on GitHub <small>arnauuc/arcosViz</small></a></p>
+		/*
+				Manipulación de datos y calculo de esperados
+		*/
 
 
-        <ul>
-          <li><a href="https://github.com/arnauuc/arcosViz/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/arnauuc/arcosViz/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/arnauuc/arcosViz">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+		//convirete la fecha de nacimento a Date()
+		var nac2date = function(string){
+			splited = string.split('-')
+			if (splited.length==3){
+				return new Date(splited[2],splited[1],splited[0])
+			}else if (splited.length==1){
+				return new Date(splited[0])
+			}else{
+				return ''
+			}			
+			return splited[0]
+		}
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+		//convirete la fecha de muerete a Date()
+		var mue2date = function(string){
+			splited = string.split('/')
+			if (splited.length==3){
+				return new Date(splited[2],splited[1],splited[0])
+			}else if (splited.length==1){
+				return new Date(splited[0])
+			}else{
+				return ''
+			}
+		}
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+		//encuentra el valor más proximo inferior i superior en un array a un valor dado
+		//Usada para estimar la edad
+		var boundries = function(val,array){
+		
+			cercanoinferior = Infinity
+			cercanoSuperior = -Infinity
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+			for(i=0;i<array.length;i++){
+				var diff = array[i]-val
+				if (diff>0)
+					cercanoSuperior = Math.abs(diff)<Math.abs(cercanoSuperior-val)?array[i]:cercanoSuperior
+				else if(diff<0)
+					cercanoinferior = Math.abs(diff)<Math.abs(cercanoinferior-val)?array[i]:cercanoinferior
+				else if (diff==0)
+					return [array[i],array[i]]
+			}			
+			return [cercanoinferior,cercanoSuperior]			
+		}
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+		//define la funcion que podrá calcular las años esperados de vida
+		var getExpetedDeath;
+		d3.json('data/hom-muj.json',function(data){
+			//console.log(data)
+			var robados = data;
+			getExpetedDeath = function(fecha_nacimiento,fecha_muerte,sexo){
+				//si on se sabe el sexo se assume que es varón
+				if(sexo==undefined){
+					sexo='hombre'
+				}
+				//encontrar las edades de muerte con datos inferior i superior
+				var keys_edades = d3.keys(robados[sexo])
+				var edad = (fecha_muerte-fecha_nacimiento)/(1000*60*60*24*365.242)
+				ref_edades = boundries(edad,keys_edades);
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+				//encontrar las fechas de muerte con datos inferior i superior
+				var ano =  1970 + fecha_muerte/(1000*60*60*24*365.242)
+				keys_anos = d3.keys(robados[sexo][ref_edades[0]])
+				ref_anos = boundries(ano,keys_anos);
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+				//encontrar los cuatro puntos mas proximos
+				A = robados[sexo][ref_edades[0]][ref_anos[0]]
+				B = robados[sexo][ref_edades[0]][ref_anos[1]]
+				C = robados[sexo][ref_edades[1]][ref_anos[0]]
+				D = robados[sexo][ref_edades[1]][ref_anos[1]]
+				//encontrar las distancias relativas en ambas dimensiones
+				if (ref_edades[0]!=ref_edades[1])
+					p = (edad-ref_edades[0]) / (ref_edades[1]-ref_edades[0])
+				else
+					p=0
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+				if (ref_anos[0]!=ref_anos[1])
+					q = (ano-ref_anos[0]) / (ref_anos[1]-ref_anos[0])
+				else
+					q=0
+				//Calculo de la interpolación lineal
+				AnosEsperados = A*p*q + B*(p)*(1-q) + C*(1-p)*(q) + D*(1-p)*(1-q)
 
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+				//Creacion del dato de salido
+				fecha_muerte_esperada = fecha_muerte.valueOf()
+				fecha_muerte_esperada+=(AnosEsperados)*(1000*60*60*365.242*24)
+				fecha_muerte_esperada = new Date(fecha_muerte_esperada)
+				return fecha_muerte_esperada
+			}
+		})	
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
 
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+		d3.csv('data/listado_1936.csv',function(datacsv){
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
-      </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/arnauuc">arnauuc</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
-    </div>
-    <script src="javascripts/scale.fix.js"></script>
-    
-  </body>
+			//transforma el string a fecha
+			datacsv.forEach(function(d){
+					d.fecha_nacimientoDate = nac2date(d.fecha_nacimiento)
+					d.fecha_muerteDate = mue2date(d.fecha_muerte_ok)
+				})
+			
+			//filtra los datos incoherentes
+			datafilter = datacsv.filter(function(d,i){
+							var nac = d.fecha_nacimientoDate
+							var mue = d.fecha_muerteDate
+
+							if (nac=='' || nac=='Invalid Date')
+								return false
+							if (mue=='' || mue=='Invalid Date')
+								return false
+							var edad = (mue-nac)/(1000*60*60*24*365)
+							if (edad<0 || edad>110)
+								return false
+							return true
+						})
+
+			//añade la muerte esperada
+			datafilter.forEach(function(d){
+								if(  getExpetedDeath(d.fecha_nacimientoDate, d.fecha_muerteDate) == 'Invalid Date'){
+									console.log(d.fecha_nacimientoDate)
+									console.log(d.fecha_muerteDate)
+									asdfasdfasd
+								}
+								d.fecha_muerte_esperadaDate= getExpetedDeath(d.fecha_nacimientoDate, d.fecha_muerteDate);
+							})
+
+
+
+			/*
+					Visualización 
+			*/
+			
+
+
+			
+			var pointparab=function(x){
+				//dada una parabola postiva que va de {0,0} a {1,0} pasando por {0.5,1} devuevle el punto y dada la x.
+				return Math.pow(x-0.5,2)*4
+			}
+
+			var croparab=function(begin,end,stop,height){
+				//la funcion genera los puntos x e y de una parabola de begin a end passando por height i parandose en stop.
+				arr=[]
+				npoints = 15
+				for(var i=0;i<npoints;i++){
+					var zero2one = i/(npoints-1)
+					var x=begin + zero2one*(end-begin)
+					var y=pointparab(zero2one)*height-height
+					if (x>stop) break;
+					arr.push({'x':x,'y':y})
+				}
+				stopprop = (stop-begin)/(end-begin)
+				arr.push({'x':stop,'y':pointparab(stopprop)*height-height})
+				return arr
+			}
+
+			var croparab2=function(begin,end,stop,height){
+				//la funcion genera los puntos x e y de parabola de begin a end passando por heigght i desde stop.
+				arr=[]
+				npoints = 15
+				stopprop = (stop-begin)/(end-begin)
+				arr.push({'x':stop,'y':pointparab(stopprop)*height-height})
+				for(var i=0;i<npoints;i++){
+					var zero2one = i/(npoints-1)
+					var x=begin + zero2one*(end-begin)
+					var y=pointparab(zero2one)*height-height
+					if (x>stop) 
+						arr.push({'x':x,'y':y})
+				}
+
+				return arr
+			}
+
+			//dibuja una linea dados unos puntos x e y
+			var line = d3.svg.line()
+						     .x(function(d) { return d.x; })
+						     .y(function(d) { return d.y; })
+						     .interpolate("monotone");
+
+			var ini = new Date('1850').valueOf()
+			var fin = new Date('2013').valueOf()
+			date2pix=d3.scale.linear().domain([ini,fin]).range([0,2000])
+			console.log(date2pix)
+
+			svg = d3.select('svg')
+					.attr('width',2000)
+					.attr('height',800)
+			var height = 100
+
+			arcsGroup  = svg.append('g') //grupo de donde cuelgan los arcos vivos
+							.attr('transform','translate(0,600)')
+			
+
+// 			for (var j=0;j<10;j++){
+				arcsGroup.selectAll('.vivos')
+						  .data(datafilter)
+						  .enter()
+						  	.append('path')
+						  	.attr('class','vivos')
+						  	.attr('name',function(d){return d.nombre})
+						  	.attr('d',function(d,i){
+						  		//PENSAR BE COM FER AIXO
+						  		var nac=date2pix( d.fecha_nacimientoDate.valueOf() )
+						  		var mue=date2pix( d.fecha_muerteDate.valueOf() )
+						  		var esp=date2pix( d.fecha_muerte_esperadaDate.valueOf() )
+						  		var arr=croparab(nac,esp,mue,height+(i%100)*4)
+						  		return line(arr)
+						  	})
+						  	.on('mouseover',pathOver)
+						  	.on('mouseout',pathOut)
+
+
+					  	
+
+			arcsGroup2  = svg.append('g')
+							.attr('transform','translate(0,600)');
+			activeGroup  = svg.append('g')
+							.attr('transform','translate(0,600)')
+							.attr('class','activeGroup');
+			arcsGroup2.selectAll('.robados')
+					  .data(datafilter)
+					  .enter()
+					  	.append('path')
+
+// 					  	.style('stroke','#888')
+// 					  	.style('fill','none')
+					  	.attr('class','robados')
+					  	.attr('name',function(d){return d.nombre})
+						.on('mouseover',pathOver)
+						.on('mouseout',pathOut)
+						.transition()
+					  	.attr('d',function(d,i){
+// 							console.log(d)
+					  		var nac=date2pix( d.fecha_nacimientoDate.valueOf() )
+					  		var mue=date2pix( d.fecha_muerteDate.valueOf() )
+					  		var esp=date2pix( d.fecha_muerte_esperadaDate.valueOf() )
+					  		var arr=croparab2(nac,esp,mue,height+(i%100)*4)
+					  		return line(arr)
+					  	})
+
+			svg.append('text')
+				.text('')
+				.attr('x',10)
+				.attr('y',20)
+				.attr('id','nombre')
+
+
+			
+		})
+function pathOver(d){
+	d3.select('#nombre').text(d.nombre)
+        d3.selectAll( "[name='"+d.nombre+"']" ).each(function(){ 
+
+	    d3.select('.activeGroup').append("path")
+		.attr("d", d3.select(this).attr("d"))
+		.classed("active " + d3.select(this).attr("class"), true )
+	})
+}
+function pathOut(d){
+	d3.select('#nombre').text('')
+	d3.select('.activeGroup').selectAll("path").remove();
+	
+}
+	</script>
+</body>
 </html>
