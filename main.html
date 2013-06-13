@@ -287,28 +287,15 @@ fill:none;
 		})
 function pathOver(d){
 	d3.select('#nombre').text(d.nombre)
-// 	d3.selectAll( "[name='"+d.nombre+"']" ).classed("active", true )
         d3.selectAll( "[name='"+d.nombre+"']" ).each(function(){ 
 
 	    d3.select('.activeGroup').append("path")
 		.attr("d", d3.select(this).attr("d"))
 		.classed("active " + d3.select(this).attr("class"), true )
-// 		.call(function(){
-// 		console.log(this[0][0]);
-// 		var path =this.select('path');
-// 		var totalLength = this[0][0].getTotalLength();
-// 		this[0][0].attr("stroke-dasharray", totalLength + " " + totalLength)
-// 		.attr("stroke-dashoffset", totalLength)
-// 		.transition()
-// 		  .duration(2000)
-// 		  .ease("linear")
-// 		  .attr("stroke-dashoffset", 0);
-// 		});
 	})
 }
 function pathOut(d){
 	d3.select('#nombre').text('')
-// 	d3.selectAll( "[name='"+d.nombre+"']" ).classed("active", false )
 	d3.select('.activeGroup').selectAll("path").remove();
 	
 }
