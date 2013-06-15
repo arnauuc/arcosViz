@@ -129,7 +129,7 @@ fill:none;
 		})	
 
 
-		d3.csv('data/listado_1936_short.csv',function(datacsv){
+		d3.csv('data/listado_1936.csv',function(datacsv){
 
 			//transforma el string a fecha
 			datacsv.forEach(function(d){
@@ -179,7 +179,7 @@ fill:none;
 			var croparab=function(begin,end,stop,height){
 				//la funcion genera los puntos x e y de una parabola de begin a end passando por height i parandose en stop.
 				arr=[]
-				npoints = 15
+				npoints = 2
 				for(var i=0;i<npoints;i++){
 					var zero2one = i/(npoints-1)
 					var x=begin + zero2one*(end-begin)
@@ -195,7 +195,7 @@ fill:none;
 			var croparab2=function(begin,end,stop,height){
 				//la funcion genera los puntos x e y de parabola de begin a end passando por heigght i desde stop.
 				arr=[]
-				npoints = 15
+				npoints = 2
 				stopprop = (stop-begin)/(end-begin)
 				arr.push({'x':stop,'y':pointparab(stopprop)*height-height})
 				for(var i=0;i<npoints;i++){
@@ -228,7 +228,11 @@ fill:none;
 			arcsGroup  = svg.append('g') //grupo de donde cuelgan los arcos vivos
 							.attr('transform','translate(0,600)')
 			
-
+			arcsGroup2  = svg.append('g')
+							.attr('transform','translate(0,600)');
+			activeGroup  = svg.append('g')
+							.attr('transform','translate(0,600)')
+							.attr('class','activeGroup');
 // 			for (var j=0;j<10;j++){
 // console.log(datafilter)
 				arcsGroup.selectAll('.vivos')
@@ -243,14 +247,14 @@ fill:none;
 						  		var mue=date2pix( d.fecha_muerteDate.valueOf() )
 						  		var esp=date2pix( d.fecha_muerte_esperadaDate.valueOf() )
 						  		var arr=croparab(nac,esp,mue,height+(i%100)*4)
+						  		
+// 						  		console.log(i + " "  + JSON.stringify(arr, null, 4))
 						  		return line(arr)
 						  	})
-
-							
 						  	.on('mouseover',pathOver)
-// 							.on('mouseover',tAnimation)
 						  	.on('mouseout',pathOut)
-						  	.attr("stroke-dasharray", function (d){
+						  	.attr("stroke-dasharray", function (d, i){
+							    console.log(i);
 							    var path =  d3.select(this);
 							    var totalLength = path.node().getTotalLength();
 							    return totalLength + ","+totalLength;
@@ -261,40 +265,77 @@ fill:none;
 							return totalLength;
 							})
 							.transition()
+							  .delay(function(d, i) { 
+							    //**** LLeig!! *******
+							      var t=2000
+							      if (i > 2 && i < 5 ){
+							      t=i * 1000
+							      }else if(i >= 5 && i < 10 ){
+							      t=i * 500 + 1000 * 5
+							      }else if(i >= 10){
+							      t=i * 50 + 1000 * 5 + 500 * 5
+							      }
+							  //******************
+							    return t ; 
+							  })
 							  .duration(2000)
 							  .ease("linear")
 							  .attr("stroke-dashoffset", 0)
-						  	
+// 							  .each('end',function(){
 
 
 					  	
 
-			arcsGroup2  = svg.append('g')
-							.attr('transform','translate(0,600)');
-			activeGroup  = svg.append('g')
-							.attr('transform','translate(0,600)')
-							.attr('class','activeGroup');
+
 			arcsGroup2.selectAll('.robados')
 					  .data(datafilter)
 					  .enter()
 					  	.append('path')
-
-// 					  	.style('stroke','#888')
-// 					  	.style('fill','none')
 					  	.attr('class','robados')
 					  	.attr('name',function(d){return d.nombre})
-						.on('mouseover',pathOver)
-						.on('mouseout',pathOut)
-						.transition()
 					  	.attr('d',function(d,i){
 // 							console.log(d)
 					  		var nac=date2pix( d.fecha_nacimientoDate.valueOf() )
 					  		var mue=date2pix( d.fecha_muerteDate.valueOf() )
 					  		var esp=date2pix( d.fecha_muerte_esperadaDate.valueOf() )
 					  		var arr=croparab2(nac,esp,mue,height+(i%100)*4)
+					  		
 					  		return line(arr)
 					  	})
+						.on('mouseover',pathOver)
+						.on('mouseout',pathOut)
+						  	.attr("stroke-dasharray", function (d){
+							    
+							    var path =  d3.select(this);
+							    var totalLength = path.node().getTotalLength();
+							    return totalLength + ","+totalLength;
+						  	})
+							.attr("stroke-dashoffset", function (d){
+							var path =  d3.select(this);
+							var totalLength = path.node().getTotalLength();
+							return totalLength;
+							})
 
+						.transition()
+						.delay(function(d, i) { 
+						      //**** Molt LLeig!! *******
+						      var t=2000
+						      if (i > 2 && i < 5 ){
+							t=i * 1000
+						      }else if(i >= 5 && i < 10 ){
+							t=i * 500 + 1000 * 5
+						      }else if(i >= 10){
+							t=(i * 50 + 1000 * 5 + 500 * 5)
+						      }
+							  
+						      return  t +2000 ; 
+						      //**************************
+						})
+						.duration(2000)
+						.ease("linear")
+						.attr("stroke-dashoffset", '0')
+						  
+// });
 			svg.append('text')
 				.text('')
 				.attr('x',10)
